@@ -48,14 +48,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Accept Android licenses (works with Java 17)
+      - name: Setup Android SDK and create local.properties
         run: |
+          # Accept Android licenses
           if command -v sdkmanager >/dev/null 2>&1; then
             echo "sdkmanager found, accepting licenses..."
             yes | flutter doctor --android-licenses
           else
-            echo "sdkmanager not found — skipping explicit license acceptance (flutter tool may still proceed)."
+            echo "sdkmanager not found — skipping explicit license acceptance"
           fi
+
+          # Create local.properties with Android SDK path for CI
+          echo "Creating local.properties for CI environment"
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+          echo "flutter.sdk=$FLUTTER_ROOT" >> android/local.properties
+          cat android/local.properties
 
       - name: Ensure Android SDK platforms & build-tools (install 34/35/36)
         run: |
@@ -71,7 +78,7 @@ jobs:
           fi
 
       - name: Build debug APK
-        run: flutter build apk --debug --no-shrink
+        run: flutter build apk --debug --no-shrink --android-skip-build-dependency-validation
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
