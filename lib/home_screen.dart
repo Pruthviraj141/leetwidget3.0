@@ -149,13 +149,27 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     // ~6 months: allow slightly bigger max cells (auto-fit still prevents overflow)
+    if (daysBack == 182) {
+      return const _CalendarVisuals(
+        radius: 1.5,
+        maxCellSizePx: 8.0,
+        cellPaddingPx: 0.2,
+        colSpacingPx: 1.8,
+        rowSpacingPx: 1.8,
+        monthGapPx: 4.0,
+        monthLabelHeight: 14.0,
+        horizontalPadding: 0.0,
+        verticalPadding: 4.0,
+      );
+    }
+    // 30 days (1 month): largest cells for better visibility
     return const _CalendarVisuals(
-      radius: 1.5,
-      maxCellSizePx: 8.0,
-      cellPaddingPx: 0.2,
-      colSpacingPx: 1.8,
-      rowSpacingPx: 1.8,
-      monthGapPx: 4.0,
+      radius: 2.0,
+      maxCellSizePx: 12.0,
+      cellPaddingPx: 0.3,
+      colSpacingPx: 2.5,
+      rowSpacingPx: 2.5,
+      monthGapPx: 5.0,
       monthLabelHeight: 14.0,
       horizontalPadding: 0.0,
       verticalPadding: 4.0,
@@ -224,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
             SizedBox(height: 8),
             Text(
-              'Long-press your home screen → Widgets → find “LeetCode Streak Widget” → drag it to your home screen.',
+              'Long-press your home screen → Widgets → find "LeetCode Streak Widget" → drag it to your home screen.',
               style: TextStyle(color: Colors.white70),
             ),
           ],
@@ -262,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: AdWidget(ad: bannerAd!),
                   ),
                 ),
-              
+               
 
               // Username + Fetch
               Padding(
@@ -454,6 +468,12 @@ class _RangeSelectorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final is365 = daysBack >= 365;
     final is182 = daysBack == 182;
+    final is30 = daysBack == 30;
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
    
 
     Widget buildChip(String label, bool selected, VoidCallback onTap) {
@@ -472,8 +492,8 @@ class _RangeSelectorCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white10),
+        borderRadius: Border),
+        border:Radius.circular(14 Border.all(color: Colors.white10),
       ),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Column(
@@ -485,9 +505,9 @@ class _RangeSelectorCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 6,
             children: [
+              buildChip('1m', is30, () => onChanged(30)),
+              buildChip('6m', is182, () => onChanged(182)),
               buildChip('1yr', is365, () => onChanged(365)),
-              buildChip('6m', is182, () => onChanged(182)),  
-        
             ],
           ),
           const SizedBox(height: 4),

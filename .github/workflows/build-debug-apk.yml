@@ -1,0 +1,80 @@
+name: Build Flutter APK (debug)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GRADLE_OPTS: -Xmx1536M
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17 (required for Android sdkmanager)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Flutter SDK (matching Dart >=3.7.2)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          architecture: 'x64'
+
+      - name: Cache Pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.pub-cache/hosted
+            ~/.pub-cache/git
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Show Flutter + Java info
+        run: |
+          java -version || true
+          flutter --version
+          flutter doctor -v || true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Accept Android licenses (works with Java 17)
+        run: |
+          if command -v sdkmanager >/dev/null 2>&1; then
+            echo "sdkmanager found, accepting licenses..."
+            yes | flutter doctor --android-licenses
+          else
+            echo "sdkmanager not found — skipping explicit license acceptance (flutter tool may still proceed)."
+          fi
+
+      - name: Ensure Android SDK platforms & build-tools (install 34/35/36)
+        run: |
+          set -e
+          echo "Android SDK root: $ANDROID_SDK_ROOT"
+          if command -v sdkmanager >/dev/null 2>&1; then
+            yes | sdkmanager --licenses || true
+            sdkmanager "platforms;android-34" "platforms;android-35" "platforms;android-36" \
+                      "build-tools;36.0.0" "platform-tools" || true
+            echo "Installed requested SDKs/build-tools."
+          else
+            echo "sdkmanager not found on runner — flutter tool may still download required components."
+          fi
+
+      - name: Build debug APK
+        run: flutter build apk --debug --no-shrink
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
