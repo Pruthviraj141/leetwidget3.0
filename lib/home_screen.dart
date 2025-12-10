@@ -151,22 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
         verticalPadding: 4.0,
       );
     }
-    // 3 months: medium sized cells for good visibility
-    if (daysBack == 90) {
-      return const CalendarVisuals(
-        radius: 1.8,
-        maxCellSizePx: 10.0,
-        cellPaddingPx: 0.25,
-        colSpacingPx: 2.0,
-        rowSpacingPx: 2.0,
-        monthGapPx: 4.5,
-        monthLabelHeight: 14.0,
-        horizontalPadding: 0.0,
-        verticalPadding: 4.0,
-      );
-    }
-    // 30 days (1 month): largest cells for better visibility
-    }
     // ~6 months: allow slightly bigger max cells (auto-fit still prevents overflow)
     if (daysBack == 182) {
       return const CalendarVisuals(
@@ -176,6 +160,20 @@ class _HomeScreenState extends State<HomeScreen> {
         colSpacingPx: 1.8,
         rowSpacingPx: 1.8,
         monthGapPx: 4.0,
+        monthLabelHeight: 14.0,
+        horizontalPadding: 0.0,
+        verticalPadding: 4.0,
+      );
+    }
+    // 3 months: medium sized cells for good visibility
+    if (daysBack == 90) {
+      return const CalendarVisuals(
+        radius: 1.8,
+        maxCellSizePx: 10.0,
+        cellPaddingPx: 0.25,
+        colSpacingPx: 2.0,
+        rowSpacingPx: 2.0,
+        monthGapPx: 4.5,
         monthLabelHeight: 14.0,
         horizontalPadding: 0.0,
         verticalPadding: 4.0,
@@ -577,15 +575,10 @@ class RangeSelectorCard extends StatelessWidget {
   });
 
   @override
-  @override
   Widget build(BuildContext context) {
     final is365 = daysBack >= 365;
     final is182 = daysBack == 182;
     final is90 = daysBack == 90;
-    final is30 = daysBack == 30;
-  Widget build(BuildContext context) {
-    final is365 = daysBack >= 365;
-    final is182 = daysBack == 182;
     final is30 = daysBack == 30;
 
     const chipTextStyle = TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600);
@@ -621,8 +614,6 @@ class RangeSelectorCard extends StatelessWidget {
             children: [
               buildChip('1m', is30, () => onChanged(30)),
               buildChip('3m', is90, () => onChanged(90)),
-              buildChip('6m', is182, () => onChanged(182)),
-              buildChip('1m', is30, () => onChanged(30)),
               buildChip('6m', is182, () => onChanged(182)),
               buildChip('1yr', is365, () => onChanged(365)),
             ],
