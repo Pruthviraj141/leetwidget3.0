@@ -469,12 +469,6 @@ class _RangeSelectorCard extends StatelessWidget {
     final is365 = daysBack >= 365;
     final is182 = daysBack == 182;
     final is30 = daysBack == 30;
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white10),
-      ),
-   
 
     Widget buildChip(String label, bool selected, VoidCallback onTap) {
       return ChoiceChip(
@@ -492,8 +486,8 @@ class _RangeSelectorCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: Border),
-        border:Radius.circular(14 Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
       ),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Column(
