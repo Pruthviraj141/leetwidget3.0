@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // MethodChannel for pinning
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:leetcode_streak/Config/HomeWidgetConfig.dart';
 import 'package:leetcode_streak/Config/adHelper.dart';
 import 'package:leetcode_streak/Model/LeetcodeData.dart';
@@ -135,10 +136,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Heuristic visuals based on selected range
-  _CalendarVisuals _visualsForDaysBack(int daysBack) {
+  CalendarVisuals _visualsForDaysBack(int daysBack) {
     // 365d: keep tighter cap so all months fit nicely.
     if (daysBack >= 365) {
-      return const _CalendarVisuals(
+      return const CalendarVisuals(
         maxCellSizePx: 10.0,
         cellPaddingPx: 0.1,
         colSpacingPx: 1.0,
@@ -152,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     // ~6 months: allow slightly bigger max cells (auto-fit still prevents overflow)
     if (daysBack == 182) {
-      return const _CalendarVisuals(
+      return const CalendarVisuals(
         radius: 1.5,
         maxCellSizePx: 8.0,
         cellPaddingPx: 0.2,
@@ -165,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     // 30 days (1 month): largest cells for better visibility
-    return const _CalendarVisuals(
+    return const CalendarVisuals(
       radius: 2.0,
       maxCellSizePx: 12.0,
       cellPaddingPx: 0.3,
@@ -247,6 +248,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showPinInstructions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF151A1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Add widget manually',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+            SizedBox(height: 8),
+            Text(
+              'Long-press your home screen → Widgets → find "LeetCode Streak Widget" → drag it to your home screen.',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _debugWidgetStatus() async {
     try {
       debugPrint('=== Widget Debug Info ===');
@@ -267,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (filename != null) {
         final file = File(filename);
         final exists = await file.exists();
-        final canRead = await file.canRead();
+        final canRead = await file.exists(); // Using exists() as fallback for canRead
         final size = exists ? await file.length() : 0;
         debugPrint('File exists: $exists, canRead: $canRead, size: $size bytes');
       }
@@ -291,32 +316,6 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(content: Text('Debug failed: $e')),
       );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF151A1E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Add widget manually',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
-            SizedBox(height: 8),
-            Text(
-              'Long-press your home screen → Widgets → find "LeetCode Streak Widget" → drag it to your home screen.',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -353,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Username + Fetch
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 5, 16, 8),
-                child: _UsernameCard(
+                child: UsernameCard(
                   controller: _usernameController,
                   onSubmit: _fetchLeetCodeData,
                   cardColor: card,
@@ -363,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // New: Range selector
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: _RangeSelectorCard(
+                child: RangeSelectorCard(
                   cardColor: card,
                   daysBack: _daysBack,
                   onChanged: (value) async {
@@ -389,18 +388,18 @@ class _HomeScreenState extends State<HomeScreen> {
               else if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: _ErrorCard(message: _errorMessage!, cardColor: card),
+                  child: ErrorCard(message: _errorMessage!, cardColor: card),
                 )
               else if (_leetCodeData != null) ...[
                 // Stats
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  child: _StatsRow(data: _leetCodeData!, cardColor: card),
+                  child: StatsRow(data: _leetCodeData!, cardColor: card),
                 ),
 
                 // Calendar (full-bleed)
                 const SizedBox(height: 8),
-                _FullBleedCalendar(
+                FullBleedCalendar(
                   child: GestureDetector(
                     onTap: () {
                       if (_usernameController.text.isNotEmpty) {
@@ -499,12 +498,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _UsernameCard extends StatelessWidget {
+// Separate widget classes at top level
+class UsernameCard extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onSubmit;
   final Color cardColor;
 
-  const _UsernameCard({
+  const UsernameCard({
     super.key,
     required this.controller,
     required this.onSubmit,
@@ -548,19 +548,17 @@ class _UsernameCard extends StatelessWidget {
   }
 }
 
-class _RangeSelectorCard extends StatelessWidget {
+class RangeSelectorCard extends StatelessWidget {
   final Color cardColor;
   final int daysBack;
   final ValueChanged<int> onChanged;
 
-  const _RangeSelectorCard({
+  const RangeSelectorCard({
     super.key,
     required this.cardColor,
     required this.daysBack,
     required this.onChanged,
   });
-
-  static const _chipTextStyle = TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600);
 
   @override
   Widget build(BuildContext context) {
@@ -568,9 +566,11 @@ class _RangeSelectorCard extends StatelessWidget {
     final is182 = daysBack == 182;
     final is30 = daysBack == 30;
 
+    const chipTextStyle = TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600);
+
     Widget buildChip(String label, bool selected, VoidCallback onTap) {
       return ChoiceChip(
-        label: Text(label, style: _chipTextStyle),
+        label: Text(label, style: chipTextStyle),
         selected: selected,
         onSelected: (_) => onTap(),
         backgroundColor: const Color(0xFF111418),
@@ -613,11 +613,11 @@ class _RangeSelectorCard extends StatelessWidget {
   }
 }
 
-class _StatsRow extends StatelessWidget {
+class StatsRow extends StatelessWidget {
   final LeetCodeData data;
   final Color cardColor;
 
-  const _StatsRow({
+  const StatsRow({
     super.key,
     required this.data,
     required this.cardColor,
@@ -626,7 +626,7 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <Widget>[
-      _StatCard(title: 'Max streak', value: '${data.streak}', color: cardColor),
+      StatCard(title: 'Max streak', value: '${data.streak}', color: cardColor),
     ];
 
     return Row(
@@ -640,12 +640,12 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
+class StatCard extends StatelessWidget {
   final String title;
   final String value;
   final Color color;
 
-  const _StatCard({
+  const StatCard({
     super.key,
     required this.title,
     required this.value,
@@ -677,10 +677,10 @@ class _StatCard extends StatelessWidget {
 }
 
 /// Edge-to-edge container so the calendar can use full width and avoid overflow.
-class _FullBleedCalendar extends StatelessWidget {
+class FullBleedCalendar extends StatelessWidget {
   final Widget child;
 
-  const _FullBleedCalendar({super.key, required this.child});
+  const FullBleedCalendar({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -689,11 +689,11 @@ class _FullBleedCalendar extends StatelessWidget {
   }
 }
 
-class _ErrorCard extends StatelessWidget {
+class ErrorCard extends StatelessWidget {
   final String message;
   final Color cardColor;
 
-  const _ErrorCard({
+  const ErrorCard({
     super.key,
     required this.message,
     required this.cardColor,
@@ -725,7 +725,7 @@ class _ErrorCard extends StatelessWidget {
 }
 
 // Tiny holder for calendar visual tweaks per range
-class _CalendarVisuals {
+class CalendarVisuals {
   final double maxCellSizePx;
   final double cellPaddingPx;
   final double colSpacingPx;
@@ -736,7 +736,7 @@ class _CalendarVisuals {
   final double verticalPadding;
   final double radius;
 
-  const _CalendarVisuals({
+  const CalendarVisuals({
     required this.maxCellSizePx,
     required this.cellPaddingPx,
     required this.colSpacingPx,

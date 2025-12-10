@@ -84,31 +84,21 @@ class Homewidgetconfig {
     }
   }
 
-  // Alternative method using render widget directly
+  // Alternative method - simply retry with increased timing
   static Future<void> _updateWithAlternativeMethod(BuildContext context, ContributionCalendar calendar) async {
     try {
-      debugPrint('Using alternative capture method...');
+      debugPrint('Using alternative capture method with extended timing...');
       
-      // Create a global key for the widget
-      GlobalKey globalKey = GlobalKey();
+      // Force a longer delay to ensure widget is fully rendered
+      await Future.delayed(const Duration(milliseconds: 2000));
       
-      // Wrap the calendar in a RepaintBoundary with a global key
-      Widget widgetToCapture = RepaintBoundary(
-        key: globalKey,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: calendar,
-        ),
-      );
-
-      // Force rebuild to ensure widget is rendered
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Try capturing using the global key
-      final result = await DavinciCapture.byKey(
-        globalKey,
+      // Try capture again with longer wait time
+      final result = await DavinciCapture.offStage(
+        calendar,
+        context: context,
         returnImageUint8List: true,
-        wait: const Duration(milliseconds: 1000),
+        openFilePreview: false,
+        wait: const Duration(milliseconds: 2000), // Even longer wait time
       );
       
       debugPrint('Alternative capture result type: ${result.runtimeType}');
