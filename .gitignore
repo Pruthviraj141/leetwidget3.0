@@ -42,4 +42,6 @@ app.*.map.json
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
+# Local configuration file (sdk path, etc)
+/android/local.properties
 /android/app/release
