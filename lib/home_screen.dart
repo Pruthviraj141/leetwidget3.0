@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // MethodChannel for pinning
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -177,32 +179,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _updateWidgetImage(LeetCodeData data) async {
-    await Homewidgetconfig.initialize();
-    final visuals = _visualsForDaysBack(_daysBack);
+    try {
+      debugPrint('Starting widget image update...');
+      await Homewidgetconfig.initialize();
+      final visuals = _visualsForDaysBack(_daysBack);
 
-    await Homewidgetconfig.update(
-      context,
-      ContributionCalendar(
-        radius: visuals.radius,
-        data: data,
-        mode: CalendarViewMode.rollingPastYear,
-        daysBack: _daysBack,
-        maxCellSizePx: visuals.maxCellSizePx,
-        cellPaddingPx: visuals.cellPaddingPx,
-        colSpacingPx: visuals.colSpacingPx,
-        rowSpacingPx: visuals.rowSpacingPx,
-        monthGapPx: visuals.monthGapPx,
-        monthLabelHeight: visuals.monthLabelHeight,
-        horizontalPadding: visuals.horizontalPadding,
-        verticalPadding: visuals.verticalPadding,
-      ),
-    );
-    widget.onRefreshDone?.call();
+      debugPrint('Creating contribution calendar widget...');
+      await Homewidgetconfig.update(
+        context,
+        ContributionCalendar(
+          radius: visuals.radius,
+          data: data,
+          mode: CalendarViewMode.rollingPastYear,
+          daysBack: _daysBack,
+          maxCellSizePx: visuals.maxCellSizePx,
+          cellPaddingPx: visuals.cellPaddingPx,
+          colSpacingPx: visuals.colSpacingPx,
+          rowSpacingPx: visuals.rowSpacingPx,
+          monthGapPx: visuals.monthGapPx,
+          monthLabelHeight: visuals.monthLabelHeight,
+          horizontalPadding: visuals.horizontalPadding,
+          verticalPadding: visuals.verticalPadding,
+        ),
+      );
+      
+      widget.onRefreshDone?.call();
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Widget image updated')),
-    );
+      if (!mounted) return;
+      
+      // Check if widget data was saved successfully
+      final isSaved = await Homewidgetconfig.isWidgetDataSaved();
+      if (isSaved) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Widget updated successfully! Check your home screen.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Widget update failed - no data saved')),
+        );
+      }
+      
+      debugPrint('Widget update completed');
+    } catch (e, stackTrace) {
+      debugPrint('Widget update failed: $e\n$stackTrace');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Widget update failed: $e')),
+      );
+    }
   }
 
   Future<void> _pinWidgetToHomeScreen() async {
@@ -223,6 +247,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showPinInstructions() {
+  Future<void> _debugWidgetStatus() async {
+    try {
+      debugPrint('=== Widget Debug Info ===');
+      
+      // Check if HomeWidget is initialized
+      await Homewidgetconfig.initialize();
+      debugPrint('✓ HomeWidget initialized');
+      
+      // Check if data is saved
+      final isSaved = await Homewidgetconfig.isWidgetDataSaved();
+      debugPrint('Widget data saved: $isSaved');
+      
+      // Get current filename
+      final filename = await HomeWidget.getWidgetData<String>('filename');
+      debugPrint('Saved filename: $filename');
+      
+      // Check if file exists
+      if (filename != null) {
+        final file = File(filename);
+        final exists = await file.exists();
+        final canRead = await file.canRead();
+        final size = exists ? await file.length() : 0;
+        debugPrint('File exists: $exists, canRead: $canRead, size: $size bytes');
+      }
+      
+      // Try manual widget update if we have data
+      if (_leetCodeData != null) {
+        debugPrint('Attempting manual widget update...');
+        await _updateWidgetImage(_leetCodeData!);
+      } else {
+        debugPrint('No LeetCode data available for update');
+      }
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debug info printed to console')),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Debug error: $e\n$stackTrace');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Debug failed: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF151A1E),
@@ -364,23 +436,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Actions
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white24),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white24),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.push_pin_outlined),
+                              label: const Text('Add to Home Screen'),
+                              onPressed: _pinWidgetToHomeScreen,
                             ),
                           ),
-                          icon: const Icon(Icons.push_pin_outlined),
-                          label: const Text('Add to Home Screen'),
-                          onPressed: _pinWidgetToHomeScreen,
-                        ),
+                        ],
                       ),
+                      const SizedBox(height: 8),
+                      // Debug button for troubleshooting
+                      if (kDebugMode)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.orange),
+                                  foregroundColor: Colors.orange,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.bug_report),
+                                label: const Text('Debug Widget'),
+                                onPressed: _debugWidgetStatus,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
